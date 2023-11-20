@@ -2,93 +2,79 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
+using static UnityEngine.GraphicsBuffer;
 
-public static class MonoExt
+public class MyCoroutine : MonoBehaviour
 {
-    public static void DoMoveTo(this Transform trans, Vector3 to, float duration, Action callback = null)
-    {
-        Tweener.Instance.MoveTo(trans, to, duration, callback);
-    }
-    public static void DoRotateTo(this Transform trans, Vector3 to, float duration, Action callback = null)
-    {
-        Tweener.Instance.RotateTo(trans, to, duration, callback);
+
+    readonly Queue<IEnumerator> coroutines = new();
+
+
+    public void AddQueue(IEnumerator coroutine) { 
+        coroutines.Enqueue(coroutine); 
     }
 
-    public static void DoFadeTo(this Image image,float from, float to, float duration, Action callback = null) {
+    public void RunQueue(Action callback = null) { 
         
+        StartCoroutine(QueueCoroutine(callback));
     }
-}
-
-public class Tweener : MonoBehaviour
-{
-    private static Tweener instance = null;
-    
-    public static Tweener Instance
-    {
-        get
+    IEnumerator QueueCoroutine(Action callback = null) {
+        while (coroutines.Count > 0)
         {
-            if (instance == null)
-                instance = FindObjectOfType<Tweener>();
-
-            if (instance == null)
-            {
-                GameObject gObj = new GameObject();
-                gObj.name = "Tweener";
-                instance = gObj.AddComponent<Tweener>();
-                DontDestroyOnLoad(gObj);
-            }
-            return instance;
+            yield return coroutines.Dequeue();
         }
+        coroutines.Clear();
+        callback?.Invoke();
     }
-
-    private void Awake()
-    {
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
-    public void MoveTo(Transform target, Vector3 to, float duration, Action callback = null)
-    {
-        StartCoroutine(Perform(duration, (t) => {
-            target.position = Vector3.Lerp(target.position,
-                 to, t / duration);
-        },callback));
-    }
-
-    public void RotateTo(Transform target, Vector3 to, float duration, Action callback = null)
-    {
-        StartCoroutine(Perform(duration,(t)=> {
-            target.localEulerAngles = Vector3.Lerp(target.localEulerAngles,
-                to, t / duration);
-        },callback));
-    }
-
-    public void Wait(float t, Action callback = null) {
-        StartCoroutine(DoWait(t,callback));
-    }
-    IEnumerator DoWait( float t,Action action)
+    public IEnumerator WaitCoroutine(float t, Action callback)
     {
         yield return new WaitForSeconds(t);
-        action();
+        callback();
     }
-    IEnumerator Perform(float duration,Action<float> action, Action callback=null) {
-        float time = 0f;
-        while (time < duration)
+
+    public IEnumerator FadeCanvasCoroutine(CanvasGroup canvasGroup,float from,float to,float duration, Action callback = null) {
+
+        canvasGroup.alpha = from;
+        float timer = 0f;
+        while (timer < duration)
         {
-            action(time);
-            time += Time.deltaTime;
+            canvasGroup.alpha = Mathf.Lerp(from, to, timer / duration);
+            timer += Time.deltaTime;
             yield return null;
         }
-        yield return null;
+        canvasGroup.alpha = to;
         callback?.Invoke();
     }
 
+    public IEnumerator MoveCoroutine(Transform target,Vector3 to, float duration, Action callback = null)
+    {
+        var from = target.position;
+        float timer = 0f;
+        while (timer < duration)
+        {
+            target.position = Vector3.LerpUnclamped(from, to, timer / duration);
+            timer += Time.deltaTime;
+            yield return null;
+        }
+        target.position = to;
+        callback?.Invoke();
+
+    }
+
+    public IEnumerator RotateCoroutine(Transform target, Vector3 to, float duration, Action callback = null)
+    {
+        var from = target.localEulerAngles;
+        float timer = 0f;
+        while (timer < duration)
+        {
+            target.localEulerAngles = Vector3.LerpUnclamped(from, to, timer / duration);
+            timer += Time.deltaTime;
+            yield return null;
+        }
+        target.localEulerAngles = to;
+        callback?.Invoke();
+      
+    }
+
 }
+
