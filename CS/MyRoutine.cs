@@ -19,7 +19,7 @@ namespace MRT
                 if (instance == null)
                 {
                     GameObject gObj = new GameObject();
-                    gObj.name = "Singleton";
+                    gObj.name = "MyRoutine";
                     instance = gObj.AddComponent<MyRoutine>();
                     DontDestroyOnLoad(gObj);
                 }
