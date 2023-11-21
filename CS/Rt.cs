@@ -3,23 +3,22 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 
-public class Routiner : MonoBehaviour
+public class Rt : MonoBehaviour
 {
-    private static Routiner _instance = null;
+    private static Rt _instance = null;
     readonly static Queue<IEnumerator> routines = new();
-    public static Routiner Rt
+    static Rt Self
     {
         get
         {
-            if (_instance == null) _instance = FindObjectOfType<Routiner>();
+            if (_instance == null) _instance = FindObjectOfType<Rt>();
 
             if (_instance == null)
             {
                 GameObject gObj = new GameObject();
                 gObj.name = "Routiner";
-                _instance = gObj.AddComponent<Routiner>();
+                _instance = gObj.AddComponent<Rt>();
                 DontDestroyOnLoad(gObj);
             }
             return _instance;
@@ -44,24 +43,24 @@ public class Routiner : MonoBehaviour
         routines.Enqueue(routine);
     }
     public static void RunRoutines(Action onCompleted = null) {
-        Rt.StartCoroutine(QueueRoutines(onCompleted));
+        Self.StartCoroutine(QueueRoutines(onCompleted));
     }
     public static void WaitFor(float t, Action onCompleted) {
-        Rt.StartCoroutine(WaitRoutine(t, onCompleted));
+        Self.StartCoroutine(WaitRoutine(t, onCompleted));
     }
     public static void FadeCanvasTo( CanvasGroup cg, float from, float to, float duration, Action onCompleted = null)
     {
-        Rt.StartCoroutine(FadeCanvasRoutine(cg, from, to, duration, onCompleted));
+        Self.StartCoroutine(FadeCanvasRoutine(cg, from, to, duration, onCompleted));
     }
     public static void MoveTo(Transform target, Vector3 to, float duration, Action onCompleted = null)
     {
-        Rt.StartCoroutine(MoveRoutine(target,to,duration,onCompleted));
+        Self.StartCoroutine(MoveRoutine(target,to,duration,onCompleted));
     }
     public static void RotateTo(Transform target, Vector3 to, float duration, Action onCompleted = null)
     {
-        Rt.StartCoroutine(RotateRoutine(target, to, duration, onCompleted));
+        Self.StartCoroutine(RotateRoutine(target, to, duration, onCompleted));
     }
-    private static IEnumerator QueueRoutines(Action onCompleted = null)
+    static IEnumerator QueueRoutines(Action onCompleted = null)
     {
         if(routines.Count==0) yield break;
         while (routines.Count > 0)
@@ -106,7 +105,6 @@ public class Routiner : MonoBehaviour
         onCompleted?.Invoke();
 
     }
-
     public static IEnumerator RotateRoutine(Transform target, Vector3 to, float duration, Action onCompleted = null)
     {
         var from = target.localEulerAngles;
