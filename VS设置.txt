@@ -1,0 +1,3 @@
+属性
+系统->子系统：窗口WINDOWS
+高级->入口点：mainCRTStartup
